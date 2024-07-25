@@ -1,0 +1,51 @@
+import pandas as pd
+import os
+from logger_config import logger
+
+class ExcelFolderCreator:
+    def __init__(self, excel_filename, columns, excel_data_dir, base_dir='data'):
+        self.excel_filename = excel_filename
+        self.columns = columns
+        self.excel_data_dir = excel_data_dir
+        self.base_dir = base_dir
+
+    def get_excel_path(self):
+        return os.path.join(self.excel_data_dir, self.excel_filename)
+
+    def get_base_path(self):
+        return os.path.join(os.getcwd(), self.base_dir)
+
+    def read_excel(self):
+        try:
+            excel_path = self.get_excel_path()
+            return pd.read_excel(excel_path, usecols=self.columns)
+        except Exception as e:
+            logger.error(f"Error reading Excel file: {str(e)}")
+            return None
+
+    def create_folders(self, df):
+        base_path = self.get_base_path()
+        os.makedirs(base_path, exist_ok=True)
+
+        for index, row in df.iterrows():
+            folder_path = os.path.join(base_path, *[str(cell) for cell in row])
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+                logger.info(f"Created folder '{folder_path}'")
+            else:
+                logger.info(f"Folder '{folder_path}' already exists, skipping.")
+
+    def process(self):
+        df = self.read_excel()
+        if df is not None:
+            self.create_folders(df)
+        else:
+            logger.error("No data to process.")
+
+if __name__ == '__main__':
+    excel_filename = 'your_excel_file.xlsx'
+    columns_to_read = ['Column1', 'Column2', 'Column3']
+    excel_data_dir = 'path_to_excel_data'
+
+    folder_creator = ExcelFolderCreator(excel_filename, columns_to_read, excel_data_dir)
+    folder_creator.process()
